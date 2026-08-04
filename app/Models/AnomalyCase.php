@@ -14,8 +14,12 @@ class AnomalyCase extends Model
     ];
 
     protected $casts = [
+        'anomaly_type_id' => 'integer',
+        'first_run_id' => 'integer',
+        'latest_run_id' => 'integer',
         'first_seen_at' => 'date',
         'last_seen_at' => 'date',
+        'times_seen' => 'integer',
     ];
 
     public function anomalyType()
@@ -49,26 +53,43 @@ class AnomalyCase extends Model
     }
 
     /**
-     * Scope: hanya case yang muncul pada run terbaru untuk jenis anomalinya (daftar aktif default).
-     * Menggantikan pendekatan field boolean "visible_on_latest_run".
+     * Scope: Kasus yang muncul pada run terbaru untuk jenis anomalinya (daftar aktif default).
      */
-    public function scopeActiveOnLatestRun(Builder $query): Builder
+    public function scopeActive(Builder $query, $anomalyTypeId = null): Builder
     {
-        return $query->whereColumn('latest_run_id', function ($sub) {
-            $sub->selectRaw('MAX(id)')
-                ->from('anomaly_runs')
-                ->whereColumn('anomaly_type_id', 'anomaly_cases.anomaly_type_id');
-        });
+        if ($anomalyTypeId !== null) {
+            $query->where('anomaly_type_id', $anomalyTypeId);
+        }
+
+        return $query->whereRaw('latest_run_id = (SELECT MAX(id) FROM anomaly_runs WHERE anomaly_type_id = anomaly_cases.anomaly_type_id)');
     }
 
     /** Scope: case yang sempat hilang dari daftar aktif (hide), tapi masih ada di database. */
+    public function scopeHidden(Builder $query, $anomalyTypeId = null): Builder
+    {
+        if ($anomalyTypeId !== null) {
+            $query->where('anomaly_type_id', $anomalyTypeId);
+        }
+
+        return $query->whereRaw('latest_run_id < (SELECT MAX(id) FROM anomaly_runs WHERE anomaly_type_id = anomaly_cases.anomaly_type_id)');
+    }
+
+    public function scopeActiveOnLatestRun(Builder $query): Builder
+    {
+        return $query->active();
+    }
+
     public function scopeHiddenFromLatestRun(Builder $query): Builder
     {
-        return $query->whereColumn('latest_run_id', '<', function ($sub) {
-            $sub->selectRaw('MAX(id)')
-                ->from('anomaly_runs')
-                ->whereColumn('anomaly_type_id', 'anomaly_cases.anomaly_type_id');
-        });
+        return $query->hidden();
+    }
+
+    public function scopeRecurring(Builder $query): Builder
+    {
+        return $query->where('times_seen', '>', 1)
+            ->whereHas('activities', function (Builder $subQuery): void {
+                $subQuery->where('activity_type', 'IMPORT_REOPEN');
+            });
     }
 
     /** Apakah case ini pernah hilang lalu muncul kembali (reopen)? */

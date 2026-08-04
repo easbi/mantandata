@@ -46,6 +46,15 @@ class ImportAnomalyService
                 }
             }
 
+            $previousRun = AnomalyRun::where('anomaly_type_id', $type->id)
+                ->where('id', '<', $run->id)
+                ->latest('id')
+                ->first();
+
+            if ($previousRun) {
+                $this->catatCaseYangHilang($type, $run, $previousRun);
+            }
+
             $run->update([
                 'jumlah_case_baru' => $caseBaru,
                 'jumlah_case_lama' => $caseLama,
