@@ -68,13 +68,18 @@ class ImportAnomalyService
     protected function processRow(AnomalyType $type, AnomalyRun $run, array $row, int &$caseBaru, int &$caseLama): void
     {
         $assignmentId = $row['assignment_id'];
+        $kodeWilayah = $this->resolveKodeWilayah($row);
 
         $anomalyKey = $this->generateKey($assignmentId, $type->kode, $row['nks'] ?? null, $row['id_responden'] ?? null);
 
-        // join alokasi petugas (bukan live join saat tampil, tapi di-freeze saat import)
-        $alokasi = AlokasiPetugas::where('assignment_id', $assignmentId)
-            ->orderByDesc('periode')
-            ->first();
+        // Join alokasi petugas berdasarkan kode wilayah saja.
+        $alokasi = null;
+
+        if (! empty($kodeWilayah)) {
+            $alokasi = AlokasiPetugas::where('kode_wilayah', $kodeWilayah)
+                ->orderByDesc('periode')
+                ->first();
+        }
 
         $existing = AnomalyCase::where('anomaly_key', $anomalyKey)->first();
 
@@ -86,7 +91,7 @@ class ImportAnomalyService
                 'assignment_id' => $assignmentId,
                 'nks' => $row['nks'] ?? null,
                 'id_responden' => $row['id_responden'] ?? null,
-                'kode_wilayah' => $alokasi->kode_wilayah ?? ($row['kode_wilayah'] ?? null),
+                'kode_wilayah' => $alokasi->kode_wilayah ?? $kodeWilayah,
                 'status_penanganan' => 'belum_ditangani',
                 'first_run_id' => $run->id,
                 'latest_run_id' => $run->id,
@@ -165,6 +170,31 @@ class ImportAnomalyService
                 ],
             ]);
         }
+    }
+
+    protected function resolveKodeWilayah(array $row): ?string
+    {
+        $candidates = [
+            'kode_wilayah',
+            'kode_sls_subsls',
+            'kode_sls',
+            'kode_subsls',
+            'id_subsls',
+            'idsubsls',
+            'id_sub_sls',
+            'id_sls',
+            'subsls_id',
+            'sub_sls_id',
+            'kode_id_subsls',
+        ];
+
+        foreach ($candidates as $key) {
+            if (! empty($row[$key])) {
+                return (string) $row[$key];
+            }
+        }
+
+        return $row['kode_wilayah'] ?? null;
     }
 
     protected function generateKey(string $assignmentId, string $kodeAnomali, ?string $nks, ?string $idResponden): string

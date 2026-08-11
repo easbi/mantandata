@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Imports\AnomalyExcelImport;
+use App\Models\AlokasiPetugas;
 use App\Models\AnomalyCase;
 use App\Models\AnomalyType;
 use App\Services\ImportAnomalyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AnomalyImportController extends Controller
@@ -18,6 +20,27 @@ class AnomalyImportController extends Controller
 
         if ($request->filled('anomaly_type_id')) {
             $query->where('anomaly_type_id', $request->anomaly_type_id);
+        }
+
+        if ($request->filled('status_penanganan')) {
+            $query->where('status_penanganan', $request->status_penanganan);
+        }
+
+        if ($request->filled('ppl_nama') || $request->filled('pml_nama') || $request->filled('taskforce_nama')) {
+            $query->whereExists(function ($subQuery) use ($request) {
+                $subQuery->select(DB::raw('1'))
+                    ->from('alokasi_petugas')
+                    ->whereColumn('alokasi_petugas.kode_wilayah', 'anomaly_cases.kode_wilayah')
+                    ->when($request->filled('ppl_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.ppl_nama', 'like', '%' . $request->ppl_nama . '%');
+                    })
+                    ->when($request->filled('pml_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.pml_nama', 'like', '%' . $request->pml_nama . '%');
+                    })
+                    ->when($request->filled('taskforce_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.taskforce_nama', 'like', '%' . $request->taskforce_nama . '%');
+                    });
+            });
         }
 
         // Default: show cases that are present on the latest run for their anomaly type.
@@ -31,16 +54,89 @@ class AnomalyImportController extends Controller
         $cases = $query->get();
         $anomalyTypes = AnomalyType::orderBy('nama')->get();
 
+        $pplOptions = AlokasiPetugas::query()
+            ->whereNotNull('ppl_nama')
+            ->where('ppl_nama', '<>', '')
+            ->distinct()
+            ->orderBy('ppl_nama')
+            ->pluck('ppl_nama');
+
+        $pmlOptions = AlokasiPetugas::query()
+            ->whereNotNull('pml_nama')
+            ->where('pml_nama', '<>', '')
+            ->distinct()
+            ->orderBy('pml_nama')
+            ->pluck('pml_nama');
+
+        $taskforceOptions = AlokasiPetugas::query()
+            ->whereNotNull('taskforce_nama')
+            ->where('taskforce_nama', '<>', '')
+            ->distinct()
+            ->orderBy('taskforce_nama')
+            ->pluck('taskforce_nama');
+
         $show = $request->get('show');
 
-        return view('anomalies.index', compact('cases', 'anomalyTypes', 'show'));
+        return view('anomalies.index', compact('cases', 'anomalyTypes', 'show', 'pplOptions', 'pmlOptions', 'taskforceOptions'));
     }
 
     public function show(AnomalyCase $case)
     {
         $case->load(['anomalyType', 'latestRun', 'snapshots', 'followups.user', 'activities']);
 
-        return view('anomalies.show', compact('case'));
+        $allocation = null;
+        $resolvedKodeWilayah = $case->kode_wilayah;
+
+        if (empty($resolvedKodeWilayah) || $resolvedKodeWilayah === '-') {
+            $latestSnapshot = $case->snapshots->last();
+            $resolvedKodeWilayah = $this->resolveKodeWilayahFromSnapshot($latestSnapshot);
+        }
+
+        if (! empty($resolvedKodeWilayah) && $resolvedKodeWilayah !== '-') {
+            $allocation = AlokasiPetugas::where('kode_wilayah', $resolvedKodeWilayah)
+                ->orderByDesc('periode')
+                ->first();
+        }
+
+        return view('anomalies.show', compact('case', 'allocation', 'resolvedKodeWilayah'));
+    }
+
+    private function resolveKodeWilayahFromSnapshot($snapshot): ?string
+    {
+        if (! $snapshot) {
+            return null;
+        }
+
+        $data = $snapshot->data_query ?? [];
+        if (! is_array($data)) {
+            return null;
+        }
+
+        $candidates = [
+            'kode_wilayah',
+            'kode_sls_subsls',
+            'kode_sls',
+            'kode_subsls',
+            'id_subsls',
+            'idsubsls',
+            'id_sub_sls',
+            'id_sls',
+            'subsls_id',
+            'sub_sls_id',
+            'kode_id_subsls',
+        ];
+
+        foreach ($data as $key => $value) {
+            $normalizedKey = strtolower(preg_replace('/[^a-z0-9]+/', '_', trim((string) $key)));
+            if (in_array($normalizedKey, $candidates, true)) {
+                $value = trim((string) $value);
+                if ($value !== '' && $value !== '-') {
+                    return $value;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function updateStatus(Request $request, AnomalyCase $case)
@@ -181,13 +277,17 @@ class AnomalyImportController extends Controller
         $rows = $sheets[0] ?? [];
 
         return collect($rows)
-            ->filter(static fn ($row) => is_array($row) && count(array_filter($row, static fn ($value) => $value !== null && $value !== '')) > 0)
+            ->filter(static fn ($row) => is_array($row) && count(array_filter($row, static fn ($value) => $value !== null && $value !== '' && $value !== '-')) > 0)
             ->map(function ($row) {
                 $normalized = [];
 
                 foreach ($row as $key => $value) {
                     $normalizedKey = strtolower(preg_replace('/[^a-z0-9]+/', '_', trim((string) $key)));
-                    $normalized[$normalizedKey] = $value;
+                    $normalizedValue = trim((string) $value);
+                    if ($normalizedValue === '' || $normalizedValue === '-') {
+                        $normalizedValue = null;
+                    }
+                    $normalized[$normalizedKey] = $normalizedValue;
                 }
 
                 return $normalized;

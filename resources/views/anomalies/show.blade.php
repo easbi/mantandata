@@ -22,14 +22,49 @@
         <h1>Detail Case Anomali</h1>
         <p><a href="{{ route('anomalies.index') }}">&larr; Kembali ke daftar</a></p>
 
+        @php $latestSnapshot = $case->snapshots->last(); @endphp
+
         @if (session('success'))
             <div class="box" style="background: #ecfdf3; margin-bottom: 12px;">{{ session('success') }}</div>
         @endif
 
         <div class="grid">
-            <div class="box"><strong>Assignment</strong><br>{{ $case->assignment_id }}</div>
+            <div class="box"><strong>Assignment ID</strong><br>{{ $case->assignment_id }}</div>
             <div class="box"><strong>Tipe</strong><br>{{ optional($case->anomalyType)->nama ?? '-' }}</div>
             <div class="box"><strong>Status Penanganan</strong><br>{{ str_replace('_', ' ', $case->status_penanganan) }}</div>
+            <div class="box"><strong>PPL</strong><br>
+                @if ($allocation?->ppl_nama && $allocation?->ppl_id)
+                    {{ $allocation->ppl_nama }} ({{ $allocation->ppl_id }})
+                @elseif ($allocation?->ppl_nama)
+                    {{ $allocation->ppl_nama }}
+                @elseif ($allocation?->ppl_id)
+                    {{ $allocation->ppl_id }}
+                @else
+                    -
+                @endif
+            </div>
+            <div class="box"><strong>PML</strong><br>
+                @if ($allocation?->pml_nama && $allocation?->pml_id)
+                    {{ $allocation->pml_nama }} ({{ $allocation->pml_id }})
+                @elseif ($allocation?->pml_nama)
+                    {{ $allocation->pml_nama }}
+                @elseif ($allocation?->pml_id)
+                    {{ $allocation->pml_id }}
+                @else
+                    -
+                @endif
+            </div>
+            <div class="box"><strong>Taskforce</strong><br>
+                @if ($allocation?->taskforce_nama && $allocation?->taskforce_id)
+                    {{ $allocation->taskforce_nama }} ({{ $allocation->taskforce_id }})
+                @elseif ($allocation?->taskforce_nama)
+                    {{ $allocation->taskforce_nama }}
+                @elseif ($allocation?->taskforce_id)
+                    {{ $allocation->taskforce_id }}
+                @else
+                    -
+                @endif
+            </div>
             <div class="box"><strong>Times Seen</strong><br>{{ $case->times_seen }}</div>
             <div class="box"><strong>First Seen</strong><br>{{ $case->first_seen_at ? $case->first_seen_at->format('Y-m-d') : '-' }}</div>
             <div class="box"><strong>Last Seen</strong><br>{{ $case->last_seen_at ? $case->last_seen_at->format('Y-m-d') : '-' }}</div>

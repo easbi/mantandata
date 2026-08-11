@@ -30,6 +30,9 @@ Route::post('/anomalies/{case}/status', [AnomalyImportController::class, 'update
 Route::post('/anomalies/{case}/followup', [AnomalyImportController::class, 'storeFollowup'])->name('anomalies.storeFollowup');
 Route::get('/anomalies/{case}', [AnomalyImportController::class, 'show'])->name('anomalies.show');
 
+Route::get('/alokasi-petugas', [App\Http\Controllers\AlokasiPetugasController::class, 'index'])->name('alokasi.index');
+Route::post('/alokasi-petugas', [App\Http\Controllers\AlokasiPetugasController::class, 'store'])->name('alokasi.store');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
