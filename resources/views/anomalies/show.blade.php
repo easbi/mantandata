@@ -1,137 +1,249 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Case Anomali</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .card { max-width: 1000px; margin: 0 auto; padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 18px; }
-        .box { background: #f8fafc; padding: 12px; border-radius: 6px; }
-        .muted { color: #666; font-size: 0.9rem; }
-        .timeline-item { border-left: 3px solid #cbd5e1; padding-left: 12px; margin: 12px 0; }
-        .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; }
-        select, textarea, button { padding: 8px 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
-        button { background: #2563eb; color: white; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Detail Case Anomali</h1>
-        <p><a href="{{ route('anomalies.index') }}">&larr; Kembali ke daftar</a></p>
+<x-app-layout>
+    <x-slot name="header">{{ __('Detail Case Anomali') }}</x-slot>
 
-        @php $latestSnapshot = $case->snapshots->last(); @endphp
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h1 class="card-title">Detail Case Anomali</h1>
+                        <p class="text-muted mb-0">Informasi lengkap kasus dan follow-up terbaru.</p>
+                    </div>
+                    <a href="{{ route('anomalies.index') }}" class="btn btn-secondary">&larr; Kembali ke daftar</a>
+                </div>
+            </div>
+        </div>
 
         @if (session('success'))
-            <div class="box" style="background: #ecfdf3; margin-bottom: 12px;">{{ session('success') }}</div>
-        @endif
-
-        <div class="grid">
-            <div class="box"><strong>Assignment ID</strong><br>{{ $case->assignment_id }}</div>
-            <div class="box"><strong>Tipe</strong><br>{{ optional($case->anomalyType)->nama ?? '-' }}</div>
-            <div class="box"><strong>Status Penanganan</strong><br>{{ str_replace('_', ' ', $case->status_penanganan) }}</div>
-            <div class="box"><strong>PPL</strong><br>
-                @if ($allocation?->ppl_nama && $allocation?->ppl_id)
-                    {{ $allocation->ppl_nama }} ({{ $allocation->ppl_id }})
-                @elseif ($allocation?->ppl_nama)
-                    {{ $allocation->ppl_nama }}
-                @elseif ($allocation?->ppl_id)
-                    {{ $allocation->ppl_id }}
-                @else
-                    -
-                @endif
-            </div>
-            <div class="box"><strong>PML</strong><br>
-                @if ($allocation?->pml_nama && $allocation?->pml_id)
-                    {{ $allocation->pml_nama }} ({{ $allocation->pml_id }})
-                @elseif ($allocation?->pml_nama)
-                    {{ $allocation->pml_nama }}
-                @elseif ($allocation?->pml_id)
-                    {{ $allocation->pml_id }}
-                @else
-                    -
-                @endif
-            </div>
-            <div class="box"><strong>Taskforce</strong><br>
-                @if ($allocation?->taskforce_nama && $allocation?->taskforce_id)
-                    {{ $allocation->taskforce_nama }} ({{ $allocation->taskforce_id }})
-                @elseif ($allocation?->taskforce_nama)
-                    {{ $allocation->taskforce_nama }}
-                @elseif ($allocation?->taskforce_id)
-                    {{ $allocation->taskforce_id }}
-                @else
-                    -
-                @endif
-            </div>
-            <div class="box"><strong>Times Seen</strong><br>{{ $case->times_seen }}</div>
-            <div class="box"><strong>First Seen</strong><br>{{ $case->first_seen_at ? $case->first_seen_at->format('Y-m-d') : '-' }}</div>
-            <div class="box"><strong>Last Seen</strong><br>{{ $case->last_seen_at ? $case->last_seen_at->format('Y-m-d') : '-' }}</div>
-        </div>
-
-        <div class="row">
-            <form action="{{ route('anomalies.updateStatus', $case) }}" method="POST" style="min-width: 280px;">
-                @csrf
-                <label for="status_penanganan">Ubah Status Penanganan</label>
-                <select name="status_penanganan" id="status_penanganan">
-                    @foreach (['belum_ditangani','proses','menunggu_konfirmasi','selesai'] as $status)
-                        <option value="{{ $status }}" {{ $case->status_penanganan === $status ? 'selected' : '' }}>{{ str_replace('_', ' ', $status) }}</option>
-                    @endforeach
-                </select>
-                <label for="catatan_status" style="margin-top: 8px;">Catatan</label>
-                <textarea name="catatan" id="catatan_status" rows="3" style="width: 100%;"></textarea>
-                <button type="submit" style="margin-top: 8px;">Simpan Status</button>
-            </form>
-
-            <form action="{{ route('anomalies.storeFollowup', $case) }}" method="POST" style="min-width: 280px;">
-                @csrf
-                <label for="followup_status">Tambah Follow Up</label>
-                <select name="status" id="followup_status">
-                    @foreach (['belum_ditangani','proses','menunggu_konfirmasi','selesai'] as $status)
-                        <option value="{{ $status }}">{{ str_replace('_', ' ', $status) }}</option>
-                    @endforeach
-                </select>
-                <label for="catatan_followup" style="margin-top: 8px;">Catatan Follow Up</label>
-                <textarea name="catatan" id="catatan_followup" rows="3" style="width: 100%;"></textarea>
-                <button type="submit" style="margin-top: 8px;">Simpan Follow Up</button>
-            </form>
-        </div>
-
-        <h3>Snapshot Terakhir</h3>
-        @if ($case->snapshots->isEmpty())
-            <p class="muted">Belum ada snapshot.</p>
-        @else
-            @php $latestSnapshot = $case->snapshots->last(); @endphp
-            <div class="box">
-                <div class="muted">Run ID: {{ $latestSnapshot->run_id }}</div>
-                <pre>{{ json_encode($latestSnapshot->data_query, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+            <div class="col-12">
+                <div class="alert alert-success">{{ session('success') }}</div>
             </div>
         @endif
 
-        <h3>Timeline</h3>
-        @if ($case->activities->isEmpty() && $case->followups->isEmpty())
-            <p class="muted">Belum ada aktivitas.</p>
-        @else
-            @php $timeline = collect($case->activities->toArray())->merge($case->followups->map(fn ($item) => [
-                'type' => 'FOLLOWUP',
-                'created_at' => $item->created_at,
-                'message' => $item->catatan ?: 'Follow up dilakukan',
-                'status' => $item->status,
-                'user' => optional($item->user)->name ?? 'User',
-            ])); @endphp
-            @foreach ($timeline->sortByDesc('created_at') as $item)
-                <div class="timeline-item">
-                    <div class="muted">{{ \Carbon\Carbon::parse($item['created_at'])->format('d M Y H:i') }}</div>
-                    @if (($item['type'] ?? null) === 'FOLLOWUP')
-                        <strong>Follow Up</strong> — {{ $item['message'] }}
-                        <div class="muted">Status: {{ str_replace('_', ' ', $item['status']) }} · Oleh: {{ $item['user'] }}</div>
+        <div class="col-12">
+            <div class="row row-deck row-cards">
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Assignment ID</div>
+                            <div class="h3 mt-2">{{ $case->assignment_id }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Tipe</div>
+                            <div class="h3 mt-2">{{ optional($case->anomalyType)->nama ?? '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Status Penanganan</div>
+                            <div class="h3 mt-2">{{ str_replace('_', ' ', $case->status_penanganan) }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Times Seen</div>
+                            <div class="h3 mt-2">{{ $case->times_seen }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">First Seen</div>
+                            <div class="h3 mt-2">{{ $case->first_seen_at ? $case->first_seen_at->format('Y-m-d') : '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Last Seen</div>
+                            <div class="h3 mt-2">{{ $case->last_seen_at ? $case->last_seen_at->format('Y-m-d') : '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">PPL</div>
+                            <div class="h3 mt-2">
+                                @if($allocation?->ppl_nama && $allocation?->ppl_id)
+                                    {{ $allocation->ppl_nama }} ({{ $allocation->ppl_id }})
+                                @elseif($allocation?->ppl_nama)
+                                    {{ $allocation->ppl_nama }}
+                                @elseif($allocation?->ppl_id)
+                                    {{ $allocation->ppl_id }}
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">PML</div>
+                            <div class="h3 mt-2">
+                                @if($allocation?->pml_nama && $allocation?->pml_id)
+                                    {{ $allocation->pml_nama }} ({{ $allocation->pml_id }})
+                                @elseif($allocation?->pml_nama)
+                                    {{ $allocation->pml_nama }}
+                                @elseif($allocation?->pml_id)
+                                    {{ $allocation->pml_id }}
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-muted">Taskforce</div>
+                            <div class="h3 mt-2">
+                                @if($allocation?->taskforce_nama && $allocation?->taskforce_id)
+                                    {{ $allocation->taskforce_nama }} ({{ $allocation->taskforce_id }})
+                                @elseif($allocation?->taskforce_nama)
+                                    {{ $allocation->taskforce_nama }}
+                                @elseif($allocation?->taskforce_id)
+                                    {{ $allocation->taskforce_id }}
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Ubah Status Penanganan</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('anomalies.updateStatus', $case) }}" method="POST" class="row g-4">
+                        @csrf
+                        <div class="col-12">
+                            <label class="form-label" for="status_penanganan">Status</label>
+                            <select id="status_penanganan" name="status_penanganan" class="form-select">
+                                @foreach (['belum_ditangani','proses','menunggu_konfirmasi','selesai'] as $status)
+                                    <option value="{{ $status }}" {{ $case->status_penanganan === $status ? 'selected' : '' }}>{{ str_replace('_', ' ', $status) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="catatan_status">Catatan</label>
+                            <textarea id="catatan_status" name="catatan" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Simpan Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tambah Follow Up</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('anomalies.storeFollowup', $case) }}" method="POST" class="row g-4">
+                        @csrf
+                        <div class="col-12">
+                            <label class="form-label" for="followup_status">Status</label>
+                            <select id="followup_status" name="status" class="form-select">
+                                @foreach (['belum_ditangani','proses','menunggu_konfirmasi','selesai'] as $status)
+                                    <option value="{{ $status }}">{{ str_replace('_', ' ', $status) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="catatan_followup">Catatan Follow Up</label>
+                            <textarea id="catatan_followup" name="catatan" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Simpan Follow Up</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Snapshot Terakhir</h3>
+                </div>
+                <div class="card-body">
+                    @if ($case->snapshots->isEmpty())
+                        <p class="text-muted">Belum ada snapshot.</p>
                     @else
-                        <strong>{{ $item['activity_type'] ?? '-' }}</strong> — {{ $item['payload']['pesan'] ?? '-' }}
+                        @php $latestSnapshot = $case->snapshots->last(); @endphp
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="text-muted">Run ID: {{ $latestSnapshot->run_id }}</p>
+                                <pre class="overflow-x-auto rounded-2xl p-4 text-sm" style="background:#0f172a;color:#e6edf3">{{ json_encode($latestSnapshot->data_query, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                            </div>
+                        </div>
                     @endif
                 </div>
-            @endforeach
-        @endif
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Timeline</h3>
+                </div>
+                <div class="card-body">
+                    @if ($case->activities->isEmpty() && $case->followups->isEmpty())
+                        <p class="text-muted">Belum ada aktivitas.</p>
+                    @else
+                        @php $timeline = collect($case->activities->toArray())->merge($case->followups->map(fn ($item) => [
+                            'type' => 'FOLLOWUP',
+                            'created_at' => $item->created_at,
+                            'message' => $item->catatan ?: 'Follow up dilakukan',
+                            'status' => $item->status,
+                            'user' => optional($item->user)->name ?? 'User',
+                        ])); @endphp
+
+                        <div class="timeline timeline-split">
+                            @foreach ($timeline->sortByDesc('created_at') as $item)
+                                <div class="timeline-item">
+                                    <div class="timeline-time">{{ \Carbon\Carbon::parse($item['created_at'])->format('d M Y H:i') }}</div>
+                                    <div class="timeline-body">
+                                        @if (($item['type'] ?? null) === 'FOLLOWUP')
+                                            <div class="text-muted">Follow Up</div>
+                                            <div class="mt-1">{{ $item['message'] }}</div>
+                                            <div class="text-muted mt-2">Status: {{ str_replace('_', ' ', $item['status']) }} · Oleh: {{ $item['user'] }}</div>
+                                        @else
+                                            <div class="text-muted">{{ $item['activity_type'] ?? '-' }}</div>
+                                            <div class="mt-1">{{ $item['payload']['pesan'] ?? '-' }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</x-app-layout>

@@ -19,9 +19,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+use App\Http\Controllers\DashboardController;
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/anomalies', [AnomalyImportController::class, 'index'])->name('anomalies.index');
 Route::get('/anomalies/import', [AnomalyImportController::class, 'create'])->name('anomalies.import');

@@ -1,62 +1,66 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import Excel Anomali</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .card { max-width: 700px; margin: 0 auto; padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
-        .alert { padding: 12px 16px; margin-bottom: 16px; border-radius: 6px; }
-        .alert-success { background: #eaf7ed; color: #1f6f3f; }
-        .alert-error { background: #fdeaea; color: #a61b1b; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 6px; border-radius: 6px; border: 1px solid #bbb; }
-        button { background: #2563eb; color: white; cursor: pointer; }
-        small { color: #666; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Import Excel Anomali</h1>
-        <p>Unggah file Excel/CSV untuk memproses data anomali.</p>
+<x-app-layout>
+    <x-slot name="header">{{ __('Import Excel Anomali') }}</x-slot>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
+    <div class="row row-cards">
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Import Excel Anomali</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Unggah file Excel/CSV untuk memproses data anomali.</p>
 
-        @if (session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
-        @endif
+                    @if (session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
 
-        <p><a href="{{ route('anomalies.index') }}">Lihat daftar kasus yang sudah diimpor</a></p>
+                    @if (session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
 
-        <form action="{{ route('anomalies.import.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+                    <div class="mt-4">
+                        <a href="{{ route('anomalies.index') }}" class="btn btn-secondary mb-4">Lihat daftar kasus yang sudah diimpor</a>
 
-            <label for="anomaly_type_id">Pilih Tipe Anomali</label>
-            <select name="anomaly_type_id" id="anomaly_type_id">
-                <option value="">-- Buat baru / gunakan default --</option>
-                @foreach ($anomalyTypes as $type)
-                    <option value="{{ $type->id }}">{{ $type->nama }} ({{ $type->kode }})</option>
-                @endforeach
-            </select>
+                        <form action="{{ route('anomalies.import.store') }}" method="POST" enctype="multipart/form-data" class="row g-4">
+                            @csrf
+                            <div class="col-12">
+                                <label class="form-label" for="anomaly_type_id">Pilih Tipe Anomali</label>
+                                <select id="anomaly_type_id" name="anomaly_type_id" class="form-select">
+                                    <option value="">-- Buat baru / gunakan default --</option>
+                                    @foreach ($anomalyTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->nama }} ({{ $type->kode }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-            <label for="anomaly_type_kode">Kode Tipe Baru (opsional)</label>
-            <input type="text" name="anomaly_type_kode" id="anomaly_type_kode" placeholder="NON_RESP">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="anomaly_type_kode">Kode Tipe Baru (opsional)</label>
+                                <input id="anomaly_type_kode" name="anomaly_type_kode" type="text" placeholder="NON_RESP" class="form-control" />
+                            </div>
 
-            <label for="anomaly_type_nama">Nama Tipe Baru (opsional)</label>
-            <input type="text" name="anomaly_type_nama" id="anomaly_type_nama" placeholder="Non Respon">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="anomaly_type_nama">Nama Tipe Baru (opsional)</label>
+                                <input id="anomaly_type_nama" name="anomaly_type_nama" type="text" placeholder="Non Respon" class="form-control" />
+                            </div>
 
-            <label for="tanggal_query">Tanggal Query</label>
-            <input type="date" name="tanggal_query" id="tanggal_query">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="tanggal_query">Tanggal Query</label>
+                                <input id="tanggal_query" name="tanggal_query" type="date" class="form-control" />
+                            </div>
 
-            <label for="file">File Excel / CSV</label>
-            <input type="file" name="file" id="file" accept=".xlsx,.xls,.csv" required>
-            <small>Kolom yang disarankan: assignment_id, nks, id_responden, kode_wilayah</small>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="file">File Excel / CSV</label>
+                                <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv" required class="form-control" />
+                                <span class="form-hint">Kolom yang disarankan: assignment_id, nks, id_responden, kode_wilayah.</span>
+                            </div>
 
-            <button type="submit" style="margin-top: 16px;">Import</button>
-        </form>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Import</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</x-app-layout>

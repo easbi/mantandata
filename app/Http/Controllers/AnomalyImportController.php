@@ -93,9 +93,46 @@ class AnomalyImportController extends Controller
         }
 
         if (! empty($resolvedKodeWilayah) && $resolvedKodeWilayah !== '-') {
+            // Try exact match first
             $allocation = AlokasiPetugas::where('kode_wilayah', $resolvedKodeWilayah)
                 ->orderByDesc('periode')
                 ->first();
+
+            // Try a normalized uppercase/no-space match
+            if (! $allocation) {
+                $normalized = strtoupper(preg_replace('/\s+/', '', $resolvedKodeWilayah));
+                $allocation = AlokasiPetugas::whereRaw('REPLACE(UPPER(kode_wilayah), " ", "") = ?', [$normalized])
+                    ->orderByDesc('periode')
+                    ->first();
+            }
+
+            // Try like match as a last resort
+            if (! $allocation) {
+                $allocation = AlokasiPetugas::where('kode_wilayah', 'like', '%'.$resolvedKodeWilayah.'%')
+                    ->orderByDesc('periode')
+                    ->first();
+            }
+        }
+
+        // If still not found, attempt to match by assignment_id present in the latest snapshot
+        if (! $allocation) {
+            $latestSnapshot = $case->snapshots->last();
+            $snapshotData = $latestSnapshot?->data_query ?? [];
+            $possibleAssignment = null;
+
+            foreach ($snapshotData as $k => $v) {
+                $normalizedKey = strtolower(preg_replace('/[^a-z0-9]+/', '_', trim((string) $k)));
+                if (in_array($normalizedKey, ['assignment_id', 'assignment', 'id_assignment'], true) && $v) {
+                    $possibleAssignment = trim((string) $v);
+                    break;
+                }
+            }
+
+            if ($possibleAssignment) {
+                $allocation = AlokasiPetugas::where('assignment_id', $possibleAssignment)
+                    ->orderByDesc('periode')
+                    ->first();
+            }
         }
 
         return view('anomalies.show', compact('case', 'allocation', 'resolvedKodeWilayah'));

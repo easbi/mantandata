@@ -1,128 +1,135 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Alokasi Petugas</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f8fafc; }
-        .card { max-width: 1200px; margin: 0 auto; padding: 24px; background: #fff; border: 1px solid #ddd; border-radius: 10px; }
-        .alert { padding: 12px 16px; margin-bottom: 16px; border-radius: 6px; }
-        .alert-success { background: #eaf7ed; color: #1f6f3f; }
-        .alert-error { background: #fdeaea; color: #a61b1b; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 6px; border-radius: 6px; border: 1px solid #bbb; }
-        button { background: #2563eb; color: white; cursor: pointer; }
-        .grid { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
-        .table-wrapper { overflow-x: auto; margin-top: 24px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #e5e7eb; text-align: left; }
-        th { background: #f1f5f9; }
-        .pagination { margin-top: 16px; }
-        .pagination a { margin-right: 8px; text-decoration: none; color: #2563eb; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Master Alokasi Petugas</h1>
+<x-app-layout>
+    <x-slot name="header">{{ __('Master Alokasi Petugas') }}</x-slot>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
-        @endif
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                        <div>
+                            <h1 class="card-title">Master Alokasi Petugas</h1>
+                            <p class="text-muted mb-0">Kelola data alokasi berdasarkan wilayah dan taskforce.</p>
+                        </div>
+                    </div>
 
-        <div class="grid">
-            <div>
-                <h2>Upload file alokasi</h2>
-                <form action="{{ route('alokasi.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <label for="periode">Periode alokasi</label>
-                    <input type="date" name="periode" id="periode" value="{{ old('periode', now()->format('Y-m-d')) }}">
-
-                    <label for="file">File Excel / CSV</label>
-                    <input type="file" name="file" id="file" accept=".xlsx,.xls,.csv" required>
-                    <small>Kolom minimal: assignment_id atau kode_wilayah. Jika hanya kode_wilayah diberikan, semua assignment di wilayah tersebut akan mengikuti master alokasi ini.</small>
-
-                    <button type="submit" style="margin-top: 16px;">Upload Master Alokasi</button>
-                </form>
-            </div>
-
-            <div>
-                <h2>Petunjuk</h2>
-                <p>File ini akan menjadi master alokasi petugas. Setiap import anomali akan menggunakan data alokasi terakhir berdasarkan <strong>assignment_id</strong> dan <strong>periode</strong>.</p>
-                <p>Jika tidak ada alokasi khusus per assignment, sistem akan fallback ke alokasi berdasarkan <strong>kode_wilayah</strong> yang sama.</p>
-                <p>Jika <strong>periode</strong> sama dan <strong>assignment_id</strong> sama, baris akan diupdate.</p>
-                <p>Gunakan format header yang fleksibel: kolom akan dinormalisasi ke <code>snake_case</code>.</p>
+                    @if (session('success'))
+                        <div class="alert alert-success mt-3">{{ session('success') }}</div>
+                    @endif
+                    @if (session('error'))
+                        <div class="alert alert-danger mt-3">{{ session('error') }}</div>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <div class="table-wrapper">
-            <h2>Daftar Alokasi</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Kode Wilayah</th>
-                        <th>Nama Wilayah</th>
-                        <th>PPL</th>
-                        <th>PML</th>
-                        <th>Taskforce</th>
-                        <th>Periode</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($allocations as $allocation)
-                        <tr>
-                            <td>{{ $allocation->kode_wilayah ?? '-' }}</td>
-                            <td>{{ $allocation->nama_wilayah ?? '-' }}</td>
-                            <td>
-                                @if ($allocation->ppl_nama && $allocation->ppl_id)
-                                    {{ $allocation->ppl_nama }} ({{ $allocation->ppl_id }})
-                                @elseif ($allocation->ppl_nama)
-                                    {{ $allocation->ppl_nama }}
-                                @elseif ($allocation->ppl_id)
-                                    {{ $allocation->ppl_id }}
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>
-                                @if ($allocation->pml_nama && $allocation->pml_id)
-                                    {{ $allocation->pml_nama }} ({{ $allocation->pml_id }})
-                                @elseif ($allocation->pml_nama)
-                                    {{ $allocation->pml_nama }}
-                                @elseif ($allocation->pml_id)
-                                    {{ $allocation->pml_id }}
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>
-                                @if ($allocation->taskforce_nama && $allocation->taskforce_id)
-                                    {{ $allocation->taskforce_nama }} ({{ $allocation->taskforce_id }})
-                                @elseif ($allocation->taskforce_nama)
-                                    {{ $allocation->taskforce_nama }}
-                                @elseif ($allocation->taskforce_id)
-                                    {{ $allocation->taskforce_id }}
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>{{ optional($allocation->periode)->format('Y-m-d') ?? '-' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6">Belum ada data alokasi.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div class="col-12">
+            <div class="row row-deck row-cards">
+                <div class="col-12 col-xl-7">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Upload file alokasi</h3>
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ route('alokasi.store') }}" method="POST" enctype="multipart/form-data" class="row g-4">
+                                @csrf
+                                <div class="col-12">
+                                    <label class="form-label" for="periode">Periode alokasi</label>
+                                    <input id="periode" name="periode" type="date" value="{{ old('periode', now()->format('Y-m-d')) }}" class="form-control" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="file">File Excel / CSV</label>
+                                    <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv" required class="form-control" />
+                                    <span class="form-hint">Kolom minimal: assignment_id atau kode_wilayah. Jika hanya kode_wilayah diberikan, semua assignment di wilayah tersebut akan mengikuti master alokasi ini.</span>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Upload Master Alokasi</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="pagination">
-            {{ $allocations->links() }}
+                <div class="col-12 col-xl-5">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Petunjuk</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">File ini akan menjadi master alokasi petugas. Setiap import anomali akan menggunakan data alokasi terakhir berdasarkan <strong>assignment_id</strong> dan <strong>periode</strong>.</p>
+                            <p class="text-muted">Jika tidak ada alokasi khusus per assignment, sistem akan fallback ke alokasi berdasarkan <strong>kode_wilayah</strong> yang sama.</p>
+                            <p class="text-muted">Jika <strong>periode</strong> sama dan <strong>assignment_id</strong> sama, baris akan diupdate.</p>
+                            <p class="text-muted">Gunakan format header yang fleksibel: kolom akan dinormalisasi ke <code>snake_case</code>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Daftar Alokasi</h3>
+                    <span class="text-muted">{{ $allocations->total() }} baris</span>
+                </div>
+                <div class="table-responsive">
+                    <table id="allocationTable" class="table card-table table-vcenter text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Kode Wilayah</th>
+                                <th>Nama Wilayah</th>
+                                <th>PPL</th>
+                                <th>PML</th>
+                                <th>Taskforce</th>
+                                <th>Periode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($allocations as $allocation)
+                                <tr>
+                                    <td>{{ $allocation->kode_wilayah ?? '-' }}</td>
+                                    <td>{{ $allocation->nama_wilayah ?? '-' }}</td>
+                                    <td>{{ $allocation->ppl_nama ? ($allocation->ppl_id ? $allocation->ppl_nama . ' (' . $allocation->ppl_id . ')' : $allocation->ppl_nama) : ($allocation->ppl_id ?? '-') }}</td>
+                                    <td>{{ $allocation->pml_nama ? ($allocation->pml_id ? $allocation->pml_nama . ' (' . $allocation->pml_id . ')' : $allocation->pml_nama) : ($allocation->pml_id ?? '-') }}</td>
+                                    <td>{{ $allocation->taskforce_nama ? ($allocation->taskforce_id ? $allocation->taskforce_nama . ' (' . $allocation->taskforce_id . ')' : $allocation->taskforce_nama) : ($allocation->taskforce_id ?? '-') }}</td>
+                                    <td>{{ optional($allocation->periode)->format('Y-m-d') ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Belum ada data alokasi.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    {{ $allocations->links() }}
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</x-app-layout>
+
+@push('scripts')
+    <script>
+        $(document).ready(function () {
+            $('#allocationTable').DataTable({
+                paging: false,
+                searching: true,
+                ordering: true,
+                info: false,
+                order: [[5, 'desc']],
+                language: {
+                    search: 'Cari:',
+                    lengthMenu: 'Tampilkan _MENU_ data',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+                    zeroRecords: 'Data tidak ditemukan',
+                    paginate: {
+                        first: 'Awal',
+                        last: 'Akhir',
+                        next: 'Berikutnya',
+                        previous: 'Sebelumnya'
+                    }
+                }
+            });
+        });
+    </script>
+@endpush
