@@ -24,6 +24,7 @@ use App\Http\Controllers\DashboardController;
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/anomalies', [AnomalyImportController::class, 'index'])->name('anomalies.index');
+Route::post('/anomalies/export', [AnomalyImportController::class, 'export'])->name('anomalies.export');
 Route::get('/anomalies/import', [AnomalyImportController::class, 'create'])->name('anomalies.import');
 Route::post('/anomalies/import', [AnomalyImportController::class, 'store'])->name('anomalies.import.store');
 Route::post('/anomalies/{case}/status', [AnomalyImportController::class, 'updateStatus'])->name('anomalies.updateStatus');

@@ -910,25 +910,19 @@
                             <tbody>
 
                                 @forelse ($taskforceStats as $task)
-
                                     <tr>
-
                                         <td>
                                             {{ $task->taskforce_nama }}
                                         </td>
-
                                         <td class="number-cell">
                                             {{ number_format($task->total) }}
                                         </td>
-
                                         <td class="number-cell">
                                             {{ number_format($task->belum) }}
                                         </td>
-
                                         <td class="number-cell">
                                             {{ number_format($task->proses) }}
                                         </td>
-
                                         <td class="number-cell">
                                             {{ number_format($task->selesai) }}
                                         </td>

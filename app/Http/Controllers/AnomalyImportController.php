@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ExportAnomalyCase;
 use App\Imports\AnomalyExcelImport;
 use App\Models\AlokasiPetugas;
 use App\Models\AnomalyCase;
@@ -331,5 +332,59 @@ class AnomalyImportController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Export data anomali aktif dengan filter sesuai yang diterapkan
+     * Hanya mengambil case yang masih muncul di run terbaru
+     */
+    public function export(Request $request)
+    {
+        // Gunakan logic filter yang sama seperti index()
+        $query = AnomalyCase::query()->with([
+            'anomalyType',
+            'latestRun',
+            'snapshots',
+            'followups'
+            ]);
+
+        if ($request->filled('anomaly_type_id')) {
+            $query->where('anomaly_type_id', $request->anomaly_type_id);
+        }
+
+        if ($request->filled('status_penanganan')) {
+            $query->where('status_penanganan', $request->status_penanganan);
+        }
+
+        if ($request->filled('ppl_nama') || $request->filled('pml_nama') || $request->filled('taskforce_nama')) {
+            $query->whereExists(function ($subQuery) use ($request) {
+                $subQuery->select(DB::raw('1'))
+                    ->from('alokasi_petugas')
+                    ->whereColumn('alokasi_petugas.kode_wilayah', 'anomaly_cases.kode_wilayah')
+                    ->when($request->filled('ppl_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.ppl_nama', 'like', '%' . $request->ppl_nama . '%');
+                    })
+                    ->when($request->filled('pml_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.pml_nama', 'like', '%' . $request->pml_nama . '%');
+                    })
+                    ->when($request->filled('taskforce_nama'), function ($subQuery) use ($request) {
+                        $subQuery->where('alokasi_petugas.taskforce_nama', 'like', '%' . $request->taskforce_nama . '%');
+                    });
+            });
+        }
+
+        // Default: hanya case yang muncul di run terbaru (show=hidden tidak diterapkan untuk export)
+        $query->active($request->anomaly_type_id)->orderByDesc('last_seen_at');
+
+        $cases = $query->get();
+
+        // Generate filename dengan informasi filter dan timestamp
+        $timestamp = Carbon::now()->format('Y-m-d_His');
+        $typeInfo = $request->filled('anomaly_type_id')
+            ? AnomalyType::find($request->anomaly_type_id)?->kode ?? 'export'
+            : 'all';
+        $filename = "anomali_export_{$typeInfo}_{$timestamp}.xlsx";
+
+        return Excel::download(new ExportAnomalyCase($cases), $filename);
     }
 }
