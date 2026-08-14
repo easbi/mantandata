@@ -38,9 +38,7 @@ class ExportAnomalyCase implements FromCollection, WithHeadings, WithMapping
             'Nama PML',
             'Nama Taskforce',
             'Status Penanganan',
-            'Follow Up Terakhir',
-            'Tanggal Follow Up Terakhir',
-            'Catatan Follow Up Terakhir',
+            'Catatan Penanganan',
             'Link Detail Anomali',
             'Link FASIH-SM'
         ];
@@ -105,9 +103,7 @@ class ExportAnomalyCase implements FromCollection, WithHeadings, WithMapping
          */
 
         $allocation = null;
-
         if (!empty($case->kode_wilayah) && $case->kode_wilayah !== '-') {
-
             // 1. Exact match
             $allocation = AlokasiPetugas::where(
                 'kode_wilayah',
@@ -164,22 +160,25 @@ class ExportAnomalyCase implements FromCollection, WithHeadings, WithMapping
         $taskforceNama = $allocation?->taskforce_nama ?? '-';
 
 
-        // Ambil follow up terakhir
+        //Ambil follow up terakhir
         $latestFollowup = $case->followups
             ->sortByDesc('created_at')
             ->first();
 
         $statusPenanganan = $case->status_penanganan ?? '-';
 
-        $followupTerakhir = $latestFollowup
-            ? str_replace('_', ' ', $latestFollowup->status ?? '-')
-            : '-';
+        $catatanPenanganan = $latestFollowup?->catatan ?? '-';
 
-        $tanggalFollowup = $latestFollowup?->created_at
-            ? $latestFollowup->created_at->format('Y-m-d H:i')
-            : '-';
+        // $followupTerakhir = $latestFollowup
+        //     ? str_replace('_', ' ', $latestFollowup->status ?? '-')
+        //     : '-';
 
-        $catatanFollowup = $latestFollowup?->catatan ?? '-';
+        // $tanggalFollowup = $latestFollowup?->created_at
+        //     ? $latestFollowup->created_at->format('Y-m-d H:i')
+        //     : '-';
+
+
+        // $catatanFollowup = $latestFollowup?->catatan ?? '-';
 
         return [
             $case->anomaly_key ?? '-',
@@ -210,9 +209,7 @@ class ExportAnomalyCase implements FromCollection, WithHeadings, WithMapping
             $pmlNama,
             $taskforceNama,
             $statusPenanganan,
-            $followupTerakhir,
-            $tanggalFollowup,
-            $catatanFollowup,
+            $catatanPenanganan,
             '=HYPERLINK("' . route('anomalies.show', $case) . '","Buka Detail Anomali")',
             $linkFasih
             ? '=HYPERLINK("' . $linkFasih . '","Buka FASIH SM")'

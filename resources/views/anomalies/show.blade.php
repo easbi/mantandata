@@ -189,58 +189,71 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-6" id="penanganan">
+        <div class="col-12" id="penanganan">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Ubah Status Penanganan</h3>
+                    <div>
+                        <h3 class="card-title">Penanganan Anomali</h3>
+                        <div class="text-muted mt-1">
+                            Perbarui status dan tambahkan catatan penanganan.
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form action="{{ route('anomalies.updateStatus', $case) }}" method="POST" class="row g-4">
-                        @csrf
-                        <div class="col-12">
-                            <label class="form-label" for="status_penanganan">Status</label>
-                            <select id="status_penanganan" name="status_penanganan" class="form-select">
-                                @foreach (['belum_ditangani', 'proses', 'menunggu_konfirmasi', 'selesai'] as $status)
-                                    <option value="{{ $status }}"
-                                        {{ $case->status_penanganan === $status ? 'selected' : '' }}>
-                                        {{ str_replace('_', ' ', $status) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="catatan_status">Catatan</label>
-                            <textarea id="catatan_status" name="catatan" rows="3" class="form-control"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">Simpan Status</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-lg-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Tambah Follow Up</h3>
-                </div>
                 <div class="card-body">
-                    <form action="{{ route('anomalies.storeFollowup', $case) }}" method="POST" class="row g-4">
+                    <form action="{{ route('anomalies.storeFollowup', $case) }}" method="POST">
                         @csrf
-                        <div class="col-12">
-                            <label class="form-label" for="followup_status">Status</label>
-                            <select id="followup_status" name="status" class="form-select">
-                                @foreach (['belum_ditangani', 'proses', 'menunggu_konfirmasi', 'selesai'] as $status)
-                                    <option value="{{ $status }}">{{ str_replace('_', ' ', $status) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="catatan_followup">Catatan Follow Up</label>
-                            <textarea id="catatan_followup" name="catatan" rows="3" class="form-control"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">Simpan Follow Up</button>
+
+                        <div class="row g-4">
+
+                            {{-- Status --}}
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="status">
+                                    Status Penanganan
+                                </label>
+
+                                <select id="status" name="status" class="form-select" required>
+                                    @foreach (['belum_ditangani', 'proses', 'menunggu_konfirmasi', 'selesai'] as $status)
+                                        <option value="{{ $status }}"
+                                            {{ $case->status_penanganan === $status ? 'selected' : '' }}>
+                                            {{ ucwords(str_replace('_', ' ', $status)) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Catatan --}}
+                            @php
+                                $catatanTerakhir = $case->followups->last()?->catatan;
+                            @endphp
+                            <div class="col-12 col-md-8">
+                                <label class="form-label" for="catatan">
+                                    Catatan
+                                </label>
+
+                                <textarea id="catatan" name="catatan" rows="3" class="form-control"
+                                    data-last-note="{{ $catatanTerakhir ?? '' }}" placeholder="Tuliskan catatan penanganan terbaru..."></textarea>
+
+                                @if ($catatanTerakhir)
+                                    <div class="form-hint">
+                                        Catatan terakhir ditampilkan sebagai panduan. Ketik untuk membuat catatan
+                                        penanganan baru.
+                                    </div>
+                                @else
+                                    <div class="form-hint">
+                                        Belum ada catatan penanganan sebelumnya.
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Button --}}
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ti ti-device-floppy me-1"></i>
+                                    Simpan Penanganan
+                                </button>
+                            </div>
+
                         </div>
                     </form>
                 </div>
@@ -271,65 +284,40 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Timeline</h3>
+                    <h3 class="card-title">Riwayat Penanganan</h3>
                 </div>
 
                 <div class="card-body">
-                    @if ($case->activities->isEmpty() && $case->followups->isEmpty())
 
-                        <p class="text-muted">
-                            Belum ada aktivitas.
+                    @if ($case->followups->isEmpty())
+
+                        <p class="text-muted mb-0">
+                            Belum ada riwayat penanganan.
                         </p>
                     @else
-                        @php
-                            $timeline = collect($case->activities->toArray())->merge(
-                                $case->followups->map(
-                                    fn($item) => [
-                                        'type' => 'FOLLOWUP',
-                                        'created_at' => $item->created_at,
-                                        'message' => $item->catatan ?: 'Follow up dilakukan',
-                                        'status' => $item->status,
-                                        'user' => optional($item->user)->name ?? 'User',
-                                    ],
-                                ),
-                            );
-                        @endphp
-
                         <div class="timeline timeline-split">
 
-                            @foreach ($timeline->sortByDesc('created_at') as $item)
+                            @foreach ($case->followups->sortByDesc('created_at') as $followup)
                                 <div class="timeline-item">
 
                                     <div class="timeline-time">
-                                        {{ \Carbon\Carbon::parse($item['created_at'])->format('d M Y H:i') }}
+                                        {{ $followup->created_at->format('d M Y H:i') }}
                                     </div>
 
                                     <div class="timeline-body">
 
-                                        @if (($item['type'] ?? null) === 'FOLLOWUP')
-                                            <div class="text-muted">
-                                                Follow Up
-                                            </div>
+                                        <div class="fw-semibold">
+                                            {{ str_replace('_', ' ', $followup->status) }}
+                                        </div>
 
-                                            <div class="mt-1">
-                                                {{ $item['message'] }}
-                                            </div>
+                                        <div class="mt-1">
+                                            {{ $followup->catatan ?: '-' }}
+                                        </div>
 
-                                            <div class="text-muted mt-2">
-                                                Status:
-                                                {{ str_replace('_', ' ', $item['status']) }}
-                                                · Oleh:
-                                                {{ $item['user'] }}
-                                            </div>
-                                        @else
-                                            <div class="text-muted">
-                                                {{ $item['activity_type'] ?? '-' }}
-                                            </div>
-
-                                            <div class="mt-1">
-                                                {{ $item['payload']['pesan'] ?? '-' }}
-                                            </div>
-                                        @endif
+                                        <div class="text-muted mt-2">
+                                            Oleh:
+                                            {{ $followup->user?->name ?? 'User' }}
+                                        </div>
 
                                     </div>
 
@@ -339,8 +327,36 @@
                         </div>
 
                     @endif
+
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('catatan');
+
+            if (!textarea) return;
+
+            const lastNote = textarea.dataset.lastNote;
+
+            if (!lastNote) return;
+
+            let showingLastNote = false;
+
+            textarea.value = lastNote;
+            textarea.classList.add('text-muted');
+            showingLastNote = true;
+
+            textarea.addEventListener('focus', function() {
+                if (showingLastNote) {
+                    textarea.value = '';
+                    textarea.classList.remove('text-muted');
+                    showingLastNote = false;
+                }
+            });
+        });
+    </script>
+
 </x-app-layout>
