@@ -4,12 +4,7 @@
     <div class="row row-cards">
         @php
             $latestSnapshot = $case->snapshots->last();
-            $fasihLink = $latestSnapshot?->data_query['link'] ?? null;
-
-            // Jika link FASIH belum memiliki /edit, tambahkan otomatis
-            if ($fasihLink && !str_ends_with(rtrim($fasihLink, '/'), '/edit')) {
-                $fasihLink = rtrim($fasihLink, '/') . '/edit';
-            }
+            $fasihLink = $latestSnapshot?->data_query['link_fasih'] ?? null;
         @endphp
 
         <div class="col-12">

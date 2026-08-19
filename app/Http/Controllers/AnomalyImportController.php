@@ -93,14 +93,14 @@ class AnomalyImportController extends Controller
             $resolvedKodeWilayah = $this->resolveKodeWilayahFromSnapshot($latestSnapshot);
         }
 
-        if (! empty($resolvedKodeWilayah) && $resolvedKodeWilayah !== '-') {
+        if (!empty($resolvedKodeWilayah) && $resolvedKodeWilayah !== '-') {
             // Try exact match first
             $allocation = AlokasiPetugas::where('kode_wilayah', $resolvedKodeWilayah)
                 ->orderByDesc('periode')
                 ->first();
 
             // Try a normalized uppercase/no-space match
-            if (! $allocation) {
+            if (!$allocation) {
                 $normalized = strtoupper(preg_replace('/\s+/', '', $resolvedKodeWilayah));
                 $allocation = AlokasiPetugas::whereRaw('REPLACE(UPPER(kode_wilayah), " ", "") = ?', [$normalized])
                     ->orderByDesc('periode')
@@ -108,15 +108,15 @@ class AnomalyImportController extends Controller
             }
 
             // Try like match as a last resort
-            if (! $allocation) {
-                $allocation = AlokasiPetugas::where('kode_wilayah', 'like', '%'.$resolvedKodeWilayah.'%')
+            if (!$allocation) {
+                $allocation = AlokasiPetugas::where('kode_wilayah', 'like', '%' . $resolvedKodeWilayah . '%')
                     ->orderByDesc('periode')
                     ->first();
             }
         }
 
         // If still not found, attempt to match by assignment_id present in the latest snapshot
-        if (! $allocation) {
+        if (!$allocation) {
             $latestSnapshot = $case->snapshots->last();
             $snapshotData = $latestSnapshot?->data_query ?? [];
             $possibleAssignment = null;
@@ -141,12 +141,12 @@ class AnomalyImportController extends Controller
 
     private function resolveKodeWilayahFromSnapshot($snapshot): ?string
     {
-        if (! $snapshot) {
+        if (!$snapshot) {
             return null;
         }
 
         $data = $snapshot->data_query ?? [];
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return null;
         }
 
@@ -199,7 +199,7 @@ class AnomalyImportController extends Controller
             'reference_id' => $case->followups()->latest('created_at')->first()?->id,
             'activity_date' => Carbon::today(),
             'payload' => [
-                'pesan' => 'Status penanganan diperbarui menjadi '.str_replace('_', ' ', $request->status_penanganan),
+                'pesan' => 'Status penanganan diperbarui menjadi ' . str_replace('_', ' ', $request->status_penanganan),
                 'status' => $request->status_penanganan,
             ],
         ]);
@@ -229,7 +229,7 @@ class AnomalyImportController extends Controller
             'reference_id' => $followup->id,
             'activity_date' => Carbon::today(),
             'payload' => [
-                'pesan' => 'Follow up ditambahkan: '.($request->catatan ?: 'Tanpa catatan'),
+                'pesan' => 'Follow up ditambahkan: ' . ($request->catatan ?: 'Tanpa catatan'),
                 'status' => $request->status,
             ],
         ]);
@@ -257,7 +257,7 @@ class AnomalyImportController extends Controller
         $type = $this->resolveType($request);
         $file = $request->file('file');
         $path = $file->store('imports');
-        $absolutePath = storage_path('app/'.$path);
+        $absolutePath = storage_path('app/' . $path);
 
         $rows = $this->readRows($absolutePath);
 
@@ -277,7 +277,7 @@ class AnomalyImportController extends Controller
             auth()->id()
         );
 
-        return redirect()->route('anomalies.index')->with('success', 'Import berhasil. '.$run->jumlah_case_baru.' case baru, '.$run->jumlah_case_lama.' case lama.');
+        return redirect()->route('anomalies.index')->with('success', 'Import berhasil. ' . $run->jumlah_case_baru . ' case baru, ' . $run->jumlah_case_lama . ' case lama.');
     }
 
     protected function resolveType(Request $request): AnomalyType
@@ -314,17 +314,51 @@ class AnomalyImportController extends Controller
         $sheets = Excel::toArray(new AnomalyExcelImport, $path);
         $rows = $sheets[0] ?? [];
 
+        $columnAliases = [
+            'link' => 'link_fasih',
+            'link_fasih' => 'link_fasih',
+            'link_fasih_sm' => 'link_fasih',
+            'link_fasih_sm_' => 'link_fasih',
+        ];
+
         return collect($rows)
-            ->filter(static fn ($row) => is_array($row) && count(array_filter($row, static fn ($value) => $value !== null && $value !== '' && $value !== '-')) > 0)
-            ->map(function ($row) {
+            ->filter(
+                static fn($row) =>
+                is_array($row) &&
+                count(array_filter(
+                    $row,
+                    static fn($value) =>
+                    $value !== null &&
+                    $value !== '' &&
+                    $value !== '-'
+                )) > 0
+            )
+            ->map(function ($row) use ($columnAliases) {
+
                 $normalized = [];
 
                 foreach ($row as $key => $value) {
-                    $normalizedKey = strtolower(preg_replace('/[^a-z0-9]+/', '_', trim((string) $key)));
+
+                    // Normalisasi nama kolom
+                    $normalizedKey = strtolower(
+                        preg_replace(
+                            '/[^a-z0-9]+/',
+                            '_',
+                            trim((string) $key)
+                        )
+                    );
+
+                    // Mapping alias nama kolom
+                    $normalizedKey = $columnAliases[$normalizedKey]
+                        ?? $normalizedKey;
+
+                    // Normalisasi nilai
                     $normalizedValue = trim((string) $value);
+
                     if ($normalizedValue === '' || $normalizedValue === '-') {
                         $normalizedValue = null;
                     }
+
                     $normalized[$normalizedKey] = $normalizedValue;
                 }
 
@@ -346,7 +380,7 @@ class AnomalyImportController extends Controller
             'latestRun',
             'snapshots',
             'followups'
-            ]);
+        ]);
 
         if ($request->filled('anomaly_type_id')) {
             $query->where('anomaly_type_id', $request->anomaly_type_id);
