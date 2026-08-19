@@ -31,7 +31,7 @@ class AnomalyImportController extends Controller
             $query->whereExists(function ($subQuery) use ($request) {
                 $subQuery->select(DB::raw('1'))
                     ->from('alokasi_petugas')
-                    ->whereColumn('alokasi_petugas.kode_wilayah', 'anomaly_cases.kode_wilayah')
+                    ->whereRaw('alokasi_petugas.kode_wilayah = LEFT(anomaly_cases.nks, 16)')
                     ->when($request->filled('ppl_nama'), function ($subQuery) use ($request) {
                         $subQuery->where('alokasi_petugas.ppl_nama', 'like', '%' . $request->ppl_nama . '%');
                     })
@@ -394,7 +394,7 @@ class AnomalyImportController extends Controller
             $query->whereExists(function ($subQuery) use ($request) {
                 $subQuery->select(DB::raw('1'))
                     ->from('alokasi_petugas')
-                    ->whereColumn('alokasi_petugas.kode_wilayah', 'anomaly_cases.kode_wilayah')
+                    ->whereRaw('alokasi_petugas.kode_wilayah = LEFT(anomaly_cases.nks, 16)')
                     ->when($request->filled('ppl_nama'), function ($subQuery) use ($request) {
                         $subQuery->where('alokasi_petugas.ppl_nama', 'like', '%' . $request->ppl_nama . '%');
                     })
