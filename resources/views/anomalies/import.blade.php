@@ -51,7 +51,7 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="file">File Excel / CSV</label>
                                 <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv" required class="form-control" />
-                                <span class="form-hint">Kolom yang disarankan: assignment_id, nks, id_responden, kode_wilayah.</span>
+                                <span class="form-hint">Kolom yang penamaan wajib disarankan terdapat: nama_usaha_keluarga_bangunan, nks</span>
                             </div>
 
                             <div class="col-12">

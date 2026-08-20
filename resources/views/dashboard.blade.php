@@ -7,13 +7,12 @@
         CDN DATATABLES
     ========================== --}}
     @push('styles')
-        <link rel="stylesheet"
-              href="https://cdn.datatables.net/2.3.3/css/dataTables.dataTables.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/2.3.3/css/dataTables.dataTables.min.css">
 
         <style>
             /* =========================
-               GLOBAL DASHBOARD
-            ========================== */
+                               GLOBAL DASHBOARD
+                            ========================== */
 
             .dashboard-title {
                 font-weight: 700;
@@ -26,8 +25,8 @@
             }
 
             /* =========================
-               STAT CARD
-            ========================== */
+                               STAT CARD
+                            ========================== */
 
             .stat-card {
                 border: 1px solid #e5e7eb;
@@ -84,8 +83,8 @@
             }
 
             /* =========================
-               FILTER
-            ========================== */
+                               FILTER
+                            ========================== */
 
             .filter-card {
                 border: 1px solid #e5e7eb;
@@ -100,8 +99,8 @@
             }
 
             /* =========================
-               STATUS CARD
-            ========================== */
+                               STATUS CARD
+                            ========================== */
 
             .status-item {
                 border: 1px solid #edf0f3;
@@ -127,8 +126,8 @@
             }
 
             /* =========================
-               ANOMALI TYPE
-            ========================== */
+                               ANOMALI TYPE
+                            ========================== */
 
             .anomaly-item {
                 padding: 12px 0;
@@ -146,7 +145,49 @@
 
             .anomaly-count {
                 font-weight: 700;
-                font-size: .9rem;
+                font-size: .8rem;
+                white-space: nowrap;
+            }
+
+            .anomaly-progress-row {
+                margin-top: 10px;
+            }
+
+            .anomaly-progress-label {
+                width: 72px;
+                flex-shrink: 0;
+                font-size: .78rem;
+                font-weight: 600;
+                color: #6b7280;
+            }
+
+            .anomaly-progress-value {
+                width: 95px;
+                flex-shrink: 0;
+                text-align: right;
+                font-size: .78rem;
+                font-weight: 600;
+                color: #4b5563;
+            }
+
+            .anomaly-progress {
+                flex: 1;
+                height: 8px;
+                background: #eef1f4;
+                border-radius: 999px;
+                overflow: hidden;
+            }
+
+            .anomaly-progress .progress-bar {
+                border-radius: 999px;
+            }
+
+            .anomaly-target-bar {
+                background: #206bc4;
+            }
+
+            .anomaly-realisasi-bar {
+                background: #2fb344;
             }
 
             .progress {
@@ -154,8 +195,8 @@
             }
 
             /* =========================
-               TASK FORCE TABLE
-            ========================== */
+                               TASK FORCE TABLE
+                            ========================== */
 
             #taskforceTable {
                 width: 100% !important;
@@ -223,8 +264,8 @@
             }
 
             /* =========================
-               RESPONSIVE
-            ========================== */
+                               RESPONSIVE
+                            ========================== */
 
             @media (max-width: 768px) {
 
@@ -267,7 +308,8 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="d-flex flex-column flex-md-row
+                    <div
+                        class="d-flex flex-column flex-md-row
                                 align-items-md-center
                                 justify-content-between gap-3">
 
@@ -283,8 +325,7 @@
                         </div>
 
                         <div>
-                            <a href="{{ route('anomalies.import') }}"
-                               class="btn btn-primary">
+                            <a href="{{ route('anomalies.import') }}" class="btn btn-primary">
                                 <i class="ti ti-file-import me-1"></i>
                                 Import File
                             </a>
@@ -323,28 +364,23 @@
                             {{-- Jenis Anomali --}}
                             <div class="col-12 col-md-4">
 
-                                <label class="form-label fw-semibold"
-                                       for="anomaly_type_id">
+                                <label class="form-label fw-semibold" for="anomaly_type_id">
                                     Jenis Anomali
                                 </label>
 
-                                <select id="anomaly_type_id"
-                                        name="anomaly_type_id"
-                                        class="form-select">
+                                <select id="anomaly_type_id" name="anomaly_type_id" class="form-select">
 
                                     <option value="">
                                         Semua jenis
                                     </option>
 
                                     @foreach ($anomalyTypes as $type)
-
                                         <option value="{{ $type->id }}"
                                             {{ $anomalyTypeId == $type->id ? 'selected' : '' }}>
 
                                             {{ $type->nama }}
 
                                         </option>
-
                                     @endforeach
 
                                 </select>
@@ -355,35 +391,28 @@
                             {{-- Run --}}
                             <div class="col-12 col-md-4">
 
-                                <label class="form-label fw-semibold"
-                                       for="run_id">
+                                <label class="form-label fw-semibold" for="run_id">
 
                                     Periode / Run
 
                                 </label>
 
-                                <select id="run_id"
-                                        name="run_id"
-                                        class="form-select">
+                                <select id="run_id" name="run_id" class="form-select">
 
                                     <option value="">
                                         Run terbaru
                                     </option>
 
                                     @foreach ($runOptions as $run)
-
                                         <option value="{{ $run->id }}"
                                             {{ (int) $runId === $run->id ? 'selected' : '' }}>
 
-                                            {{ $run->tanggal_query
-                                                ? $run->tanggal_query->format('Y-m-d')
-                                                : $run->created_at->format('Y-m-d') }}
+                                            {{ $run->tanggal_query ? $run->tanggal_query->format('Y-m-d') : $run->created_at->format('Y-m-d') }}
 
                                             -
                                             {{ $run->anomalyType->nama ?? 'Unknown' }}
 
                                         </option>
-
                                     @endforeach
 
                                 </select>
@@ -394,30 +423,25 @@
                             {{-- Wilayah --}}
                             <div class="col-12 col-md-4">
 
-                                <label class="form-label fw-semibold"
-                                       for="kode_wilayah">
+                                <label class="form-label fw-semibold" for="kode_wilayah">
 
                                     Wilayah
 
                                 </label>
 
-                                <select id="kode_wilayah"
-                                        name="kode_wilayah"
-                                        class="form-select">
+                                <select id="kode_wilayah" name="kode_wilayah" class="form-select">
 
                                     <option value="">
                                         Semua wilayah
                                     </option>
 
                                     @foreach ($wilayahOptions as $wilayah)
-
                                         <option value="{{ $wilayah }}"
                                             {{ $kodeWilayah === $wilayah ? 'selected' : '' }}>
 
                                             {{ $wilayah }}
 
                                         </option>
-
                                     @endforeach
 
                                 </select>
@@ -427,8 +451,7 @@
 
                             <div class="col-12 d-flex justify-content-end">
 
-                                <button type="submit"
-                                        class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary">
 
                                     <i class="ti ti-filter me-1"></i>
                                     Terapkan Filter
@@ -460,7 +483,8 @@
 
                         <div class="card-body">
 
-                            <div class="d-flex
+                            <div
+                                class="d-flex
                                         align-items-center
                                         justify-content-between">
 
@@ -498,7 +522,8 @@
 
                         <div class="card-body">
 
-                            <div class="d-flex
+                            <div
+                                class="d-flex
                                         align-items-center
                                         justify-content-between">
 
@@ -538,7 +563,8 @@
 
                         <div class="card-body">
 
-                            <div class="d-flex
+                            <div
+                                class="d-flex
                                         align-items-center
                                         justify-content-between">
 
@@ -578,7 +604,8 @@
 
                         <div class="card-body">
 
-                            <div class="d-flex
+                            <div
+                                class="d-flex
                                         align-items-center
                                         justify-content-between">
 
@@ -723,8 +750,8 @@
 
 
         {{-- =====================================================
-            ANOMALI PER JENIS
-        ====================================================== --}}
+    ANOMALI PER JENIS
+====================================================== --}}
 
         <div class="col-12 col-lg-6">
 
@@ -732,9 +759,10 @@
 
                 <div class="card-header">
 
-                    <div class="w-100 d-flex
-                                justify-content-between
-                                align-items-center">
+                    <div
+                        class="w-100 d-flex
+                        justify-content-between
+                        align-items-center">
 
                         <div>
 
@@ -743,7 +771,7 @@
                             </h3>
 
                             <div class="text-muted small">
-                                Jumlah kasus berdasarkan jenis anomali.
+                                Target dan realisasi penanganan berdasarkan Assignment ID.
                             </div>
 
                         </div>
@@ -758,11 +786,6 @@
 
 
                 <div class="card-body">
-
-                    @php
-                        $maxCount = $anomalyTypeCounts->max('total') ?: 1;
-                    @endphp
-
 
                     @if ($anomalyTypeCounts->isEmpty())
 
@@ -781,47 +804,126 @@
                             </p>
 
                         </div>
-
                     @else
-
                         @foreach ($anomalyTypeCounts as $count)
+                            @php
+
+                                $target = (int) $count->target;
+
+                                $realisasi = (int) $count->realisasi;
+
+                                /*
+                                 * Target selalu menjadi 100%.
+                                 *
+                                 * Realisasi dihitung berdasarkan:
+                                 * realisasi / target * 100
+                                 */
+                                $persenTarget = $target > 0 ? 100 : 0;
+
+                                $persenRealisasi = $target > 0 ? round(($realisasi / $target) * 100, 1) : 0;
+
+                                /*
+                                 * Jangan sampai progress lebih dari 100%.
+                                 */
+                                $persenRealisasiBar = min(max($persenRealisasi, 0), 100);
+
+                            @endphp
+
 
                             <div class="anomaly-item">
 
-                                <div class="d-flex
-                                            justify-content-between
-                                            align-items-center
-                                            mb-2">
+                                {{-- Nama Anomali --}}
+                                <div
+                                    class="d-flex
+                                    justify-content-between
+                                    align-items-center
+                                    mb-2">
 
                                     <div class="anomaly-name">
                                         {{ $count->nama }}
                                     </div>
 
                                     <div class="anomaly-count">
-                                        {{ number_format($count->total) }}
+
+                                        {{ number_format($target) }}
+                                        Assignment
+
                                     </div>
 
                                 </div>
 
 
-                                <div class="progress"
-                                     style="height: 7px;">
+                                {{-- =========================
+                            TARGET
+                        ========================== --}}
 
-                                    <div class="progress-bar"
-                                         role="progressbar"
-                                         style="
-                                            width:
-                                            {{ $maxCount > 0
-                                                ? round(($count->total / $maxCount) * 100, 2)
-                                                : 0
-                                            }}%;
-                                         ">
+                                <div
+                                    class="d-flex
+                                    align-items-center
+                                    anomaly-progress-row">
+
+                                    <div class="anomaly-progress-label">
+                                        Target
+                                    </div>
+
+                                    <div class="anomaly-progress">
+
+                                        <div class="progress-bar anomaly-target-bar" role="progressbar"
+                                            style="width: 100%;" aria-valuenow="100" aria-valuemin="0"
+                                            aria-valuemax="100">
+                                        </div>
+
+                                    </div>
+
+                                    <div class="anomaly-progress-value">
+
+                                        {{ number_format($target) }}
+
+                                        <span class="text-muted">
+                                            ({{ number_format($persenTarget, 0) }}%)
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- =========================
+                            REALISASI
+                        ========================== --}}
+
+                                <div
+                                    class="d-flex
+                                    align-items-center
+                                    anomaly-progress-row">
+
+                                    <div class="anomaly-progress-label">
+                                        Realisasi
+                                    </div>
+
+                                    <div class="anomaly-progress">
+
+                                        <div class="progress-bar anomaly-realisasi-bar" role="progressbar"
+                                            style="width: {{ $persenRealisasiBar }}%;"
+                                            aria-valuenow="{{ $persenRealisasiBar }}" aria-valuemin="0"
+                                            aria-valuemax="100">
+                                        </div>
+
+                                    </div>
+
+                                    <div class="anomaly-progress-value">
+
+                                        {{ number_format($realisasi) }}
+
+                                        <span class="text-muted">
+                                            ({{ number_format($persenRealisasi, 1) }}%)
+                                        </span>
+
                                     </div>
 
                                 </div>
 
                             </div>
-
                         @endforeach
 
                     @endif
@@ -843,7 +945,8 @@
 
                 <div class="card-header">
 
-                    <div class="w-100 d-flex
+                    <div
+                        class="w-100 d-flex
                                 flex-column flex-md-row
                                 justify-content-between
                                 align-items-md-center
@@ -875,11 +978,9 @@
 
                     <div class="table-responsive">
 
-                        <table id="taskforceTable"
-                               class="table table-vcenter table-hover">
+                        <table id="taskforceTable" class="table table-vcenter table-hover">
 
                             <thead>
-
                                 <tr>
 
                                     <th>
@@ -933,8 +1034,7 @@
 
                                     <tr>
 
-                                        <td colspan="5"
-                                            class="text-center text-muted py-5">
+                                        <td colspan="5" class="text-center text-muted py-5">
 
                                             <i class="ti ti-database-off fs-2 d-block mb-2"></i>
 
@@ -943,7 +1043,6 @@
                                         </td>
 
                                     </tr>
-
                                 @endforelse
 
                             </tbody>
@@ -966,7 +1065,6 @@
     ====================================================== --}}
 
     @push('scripts')
-
         {{-- jQuery --}}
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -975,8 +1073,7 @@
 
 
         <script>
-
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
 
                 new DataTable('#taskforceTable', {
 
@@ -1037,9 +1134,7 @@
                 });
 
             });
-
         </script>
-
     @endpush
 
 </x-app-layout>

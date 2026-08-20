@@ -67,10 +67,14 @@ class DashboardController extends Controller
             ->toArray();
 
         /*
-        |--------------------------------------------------------------------------
-        | Anomali Per Jenis
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| Anomali Per Jenis
+|--------------------------------------------------------------------------
+|
+| Target     = jumlah Assignment ID unik pada case anomali
+| Realisasi  = jumlah Assignment ID unik yang sudah selesai
+|
+*/
 
         $anomalyTypeCounts = (clone $baseQuery)
             ->join(
@@ -80,12 +84,45 @@ class DashboardController extends Controller
                 'anomaly_types.id'
             )
             ->select(
+                'anomaly_types.id',
                 'anomaly_types.nama',
-                DB::raw('COUNT(*) as total')
+
+                // Target = seluruh Assignment ID unik
+                DB::raw('COUNT(DISTINCT anomaly_cases.assignment_id) as target'),
+
+                // Realisasi = Assignment ID unik yang sudah selesai
+                DB::raw("
+            COUNT(
+                DISTINCT CASE
+                    WHEN anomaly_cases.status_penanganan = 'selesai'
+                    THEN anomaly_cases.assignment_id
+                END
+            ) as realisasi
+        ")
             )
-            ->groupBy('anomaly_types.nama')
-            ->orderByDesc('total')
+            ->groupBy(
+                'anomaly_types.id',
+                'anomaly_types.nama'
+            )
+            ->orderByDesc('target')
             ->get();
+
+
+        $anomalyTypeCounts->transform(function ($item) {
+
+            $item->target = (int) $item->target;
+            $item->realisasi = (int) $item->realisasi;
+
+            $item->persen_target = $item->target > 0
+                ? 100
+                : 0;
+
+            $item->persen_realisasi = $item->target > 0
+                ? round(($item->realisasi / $item->target) * 100, 1)
+                : 0;
+
+            return $item;
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -93,50 +130,50 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-$taskforceStats = DB::table('anomaly_cases')
-    ->leftJoin('alokasi_petugas', function ($join) {
-        $join->on(
-            'alokasi_petugas.kode_wilayah',
-            '=',
-            DB::raw('LEFT(anomaly_cases.nks, 16)')
-        );
-    })
-    ->when(
-        $runId,
-        fn($query) => $query->where(
-            'anomaly_cases.latest_run_id',
-            $runId
-        ),
-        fn($query) => $query->whereRaw(
-            'anomaly_cases.latest_run_id = (
+        $taskforceStats = DB::table('anomaly_cases')
+            ->leftJoin('alokasi_petugas', function ($join) {
+                $join->on(
+                    'alokasi_petugas.kode_wilayah',
+                    '=',
+                    DB::raw('LEFT(anomaly_cases.nks, 16)')
+                );
+            })
+            ->when(
+                $runId,
+                fn($query) => $query->where(
+                    'anomaly_cases.latest_run_id',
+                    $runId
+                ),
+                fn($query) => $query->whereRaw(
+                    'anomaly_cases.latest_run_id = (
                 SELECT MAX(id)
                 FROM anomaly_runs
                 WHERE anomaly_type_id = anomaly_cases.anomaly_type_id
             )'
-        )
-    )
-    ->when(
-        $anomalyTypeId,
-        fn($query) => $query->where(
-            'anomaly_cases.anomaly_type_id',
-            $anomalyTypeId
-        )
-    )
-    ->when(
-        $kodeWilayah,
-        fn($query) => $query->where(
-            'anomaly_cases.kode_wilayah',
-            $kodeWilayah
-        )
-    )
-    ->selectRaw("
+                )
+            )
+            ->when(
+                $anomalyTypeId,
+                fn($query) => $query->where(
+                    'anomaly_cases.anomaly_type_id',
+                    $anomalyTypeId
+                )
+            )
+            ->when(
+                $kodeWilayah,
+                fn($query) => $query->where(
+                    'anomaly_cases.kode_wilayah',
+                    $kodeWilayah
+                )
+            )
+            ->selectRaw("
         COALESCE(
             NULLIF(alokasi_petugas.taskforce_nama, ''),
             'Tanpa Task Force'
         ) AS taskforce_nama
     ")
-    ->selectRaw('COUNT(*) AS total')
-    ->selectRaw("
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw("
         SUM(
             CASE
                 WHEN anomaly_cases.status_penanganan = 'belum_ditangani'
@@ -144,7 +181,7 @@ $taskforceStats = DB::table('anomaly_cases')
             END
         ) AS belum
     ")
-    ->selectRaw("
+            ->selectRaw("
         SUM(
             CASE
                 WHEN anomaly_cases.status_penanganan = 'proses'
@@ -152,7 +189,7 @@ $taskforceStats = DB::table('anomaly_cases')
             END
         ) AS proses
     ")
-    ->selectRaw("
+            ->selectRaw("
         SUM(
             CASE
                 WHEN anomaly_cases.status_penanganan = 'menunggu_konfirmasi'
@@ -160,7 +197,7 @@ $taskforceStats = DB::table('anomaly_cases')
             END
         ) AS menunggu
     ")
-    ->selectRaw("
+            ->selectRaw("
         SUM(
             CASE
                 WHEN anomaly_cases.status_penanganan = 'selesai'
@@ -168,9 +205,9 @@ $taskforceStats = DB::table('anomaly_cases')
             END
         ) AS selesai
     ")
-    ->groupBy('taskforce_nama')
-    ->orderByDesc('total')
-    ->get();
+            ->groupBy('taskforce_nama')
+            ->orderByDesc('total')
+            ->get();
         /*
         |--------------------------------------------------------------------------
         | Data Filter
