@@ -27,7 +27,7 @@
                 <div class="col-12 col-xl-7">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Upload file alokasi</h3>
+                            <h3 class="card-title">Upload file alokasi </h3>
                         </div>
                         <div class="card-body">
                             <form action="{{ route('alokasi.store') }}" method="POST" enctype="multipart/form-data" class="row g-4">
@@ -59,6 +59,9 @@
                             <p class="text-muted">Jika tidak ada alokasi khusus per assignment, sistem akan fallback ke alokasi berdasarkan <strong>kode_wilayah</strong> yang sama.</p>
                             <p class="text-muted">Jika <strong>periode</strong> sama dan <strong>assignment_id</strong> sama, baris akan diupdate.</p>
                             <p class="text-muted">Gunakan format header yang fleksibel: kolom akan dinormalisasi ke <code>snake_case</code>.</p>
+                            <a href="{{ route('alokasi.template') }}" class="btn btn-outline-primary btn-sm mt-2">
+                                Unduh Template
+                            </a>
                         </div>
                     </div>
                 </div>

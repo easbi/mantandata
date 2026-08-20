@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AlokasiPetugasTemplateExport;
 use App\Imports\AnomalyExcelImport;
 use App\Models\AlokasiPetugas;
 use Carbon\Carbon;
@@ -21,6 +22,14 @@ class AlokasiPetugasController extends Controller
         $allocations = $query->orderBy('assignment_id')->orderByDesc('periode')->paginate(25);
 
         return view('alokasi_petugas.index', compact('allocations'));
+    }
+
+    public function template()
+    {
+        return Excel::download(
+            new AlokasiPetugasTemplateExport,
+            'template_alokasi_petugas.xlsx'
+        );
     }
 
     public function store(Request $request)

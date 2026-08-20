@@ -32,6 +32,7 @@ Route::post('/anomalies/{case}/followup', [AnomalyImportController::class, 'stor
 Route::get('/anomalies/{case}', [AnomalyImportController::class, 'show'])->name('anomalies.show');
 
 Route::get('/alokasi-petugas', [App\Http\Controllers\AlokasiPetugasController::class, 'index'])->name('alokasi.index');
+Route::get('/alokasi-petugas/template', [App\Http\Controllers\AlokasiPetugasController::class, 'template'])->name('alokasi.template');
 Route::post('/alokasi-petugas', [App\Http\Controllers\AlokasiPetugasController::class, 'store'])->name('alokasi.store');
 
 Route::middleware('auth')->group(function () {
