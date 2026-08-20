@@ -326,6 +326,84 @@
                 </div>
             </div>
         </div>
+
+
+
+        {{-- RIWAYAT ANOMALI --}}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Riwayat Anomali</h3>
+                        <div class="text-muted mt-1">
+                            Riwayat kemunculan anomali pada setiap Run / Upload.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if ($allRuns->isEmpty())
+                        <p class="text-muted mb-0">
+                            Belum ada riwayat Run.
+                        </p>
+                    @else
+                        <div class="timeline timeline-split">
+
+                            @foreach ($allRuns as $run)
+                                @php
+                                    $ditemukan = $snapshotsByRun->has($run->id);
+
+                                    $tanggalRun = $run->tanggal_query
+                                        ? $run->tanggal_query->format('d M Y')
+                                        : $run->created_at->format('d M Y H:i');
+                                @endphp
+
+                                <div class="timeline-item">
+
+                                    <div class="timeline-time">
+                                        {{ $tanggalRun }}
+                                    </div>
+
+                                    <div class="timeline-body">
+
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+
+                                            <span class="fw-semibold">
+                                                Run #{{ $run->id }}
+                                            </span>
+
+                                            @if ($ditemukan)
+                                                <span class="badge bg-success-lt">
+                                                    <i class="ti ti-check me-1"></i>
+                                                    Ditemukan
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary-lt">
+                                                    <i class="ti ti-x me-1"></i>
+                                                    Tidak Ditemukan
+                                                </span>
+                                            @endif
+
+                                        </div>
+
+                                        <div class="text-muted mt-2">
+                                            @if ($ditemukan)
+                                                Anomali ditemukan pada Run ini.
+                                            @else
+                                                Assignment tidak masuk hasil query pada Run ini.
+                                            @endif
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            @endforeach
+
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>

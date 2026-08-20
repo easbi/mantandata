@@ -7,6 +7,7 @@ use App\Imports\AnomalyExcelImport;
 use App\Models\AlokasiPetugas;
 use App\Models\AnomalyCase;
 use App\Models\AnomalyType;
+use App\Models\AnomalyRun;
 use App\Services\ImportAnomalyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -85,6 +86,7 @@ class AnomalyImportController extends Controller
     {
         $case->load(['anomalyType', 'latestRun', 'snapshots', 'followups.user', 'activities']);
 
+        //  Alokasi Petugas
         $allocation = null;
         $resolvedKodeWilayah = $case->kode_wilayah;
 
@@ -121,7 +123,16 @@ class AnomalyImportController extends Controller
             }
         }
 
-        return view('anomalies.show', compact('case', 'allocation', 'resolvedKodeWilayah'));
+
+        // Riwayat Anomali Case
+        $allRuns = AnomalyRun::where('anomaly_type_id', $case->anomaly_type_id)
+            ->orderByDesc('tanggal_query')
+            ->orderByDesc('id')
+            ->get();
+
+        $snapshotsByRun = $case->snapshots->groupBy('run_id');
+
+        return view('anomalies.show', compact('case', 'allocation', 'resolvedKodeWilayah', 'allRuns', 'snapshotsByRun'));
     }
 
     private function resolveKodeWilayahFromSnapshot($snapshot): ?string
