@@ -93,79 +93,84 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $taskforceStats = DB::table('anomaly_cases as ac')
-            ->leftJoin('alokasi_petugas as ap', function ($join) {
-                $join->on(
-                    'ap.kode_wilayah',
-                    '=',
-                    DB::raw("CONCAT(LEFT(ac.nks, 15), '0')")
-                );
-            })
-            ->when(
-                $runId,
-                fn($query) => $query->where('ac.latest_run_id', $runId),
-                fn($query) => $query->whereRaw(
-                    'ac.latest_run_id = (
+$taskforceStats = DB::table('anomaly_cases')
+    ->leftJoin('alokasi_petugas', function ($join) {
+        $join->on(
+            'alokasi_petugas.kode_wilayah',
+            '=',
+            DB::raw('LEFT(anomaly_cases.nks, 16)')
+        );
+    })
+    ->when(
+        $runId,
+        fn($query) => $query->where(
+            'anomaly_cases.latest_run_id',
+            $runId
+        ),
+        fn($query) => $query->whereRaw(
+            'anomaly_cases.latest_run_id = (
                 SELECT MAX(id)
                 FROM anomaly_runs
-                WHERE anomaly_type_id = ac.anomaly_type_id
+                WHERE anomaly_type_id = anomaly_cases.anomaly_type_id
             )'
-                )
-            )
-            ->when(
-                $anomalyTypeId,
-                fn($query) => $query->where('ac.anomaly_type_id', $anomalyTypeId)
-            )
-            ->when(
-                $kodeWilayah,
-                fn($query) => $query->where('ac.kode_wilayah', $kodeWilayah)
-            )
-            ->selectRaw("
+        )
+    )
+    ->when(
+        $anomalyTypeId,
+        fn($query) => $query->where(
+            'anomaly_cases.anomaly_type_id',
+            $anomalyTypeId
+        )
+    )
+    ->when(
+        $kodeWilayah,
+        fn($query) => $query->where(
+            'anomaly_cases.kode_wilayah',
+            $kodeWilayah
+        )
+    )
+    ->selectRaw("
         COALESCE(
-            NULLIF(TRIM(ap.taskforce_nama), ''),
+            NULLIF(alokasi_petugas.taskforce_nama, ''),
             'Tanpa Task Force'
         ) AS taskforce_nama
     ")
-            ->selectRaw('COUNT(*) AS total')
-            ->selectRaw("
+    ->selectRaw('COUNT(*) AS total')
+    ->selectRaw("
         SUM(
             CASE
-                WHEN ac.status_penanganan = 'belum_ditangani'
+                WHEN anomaly_cases.status_penanganan = 'belum_ditangani'
                 THEN 1 ELSE 0
             END
         ) AS belum
     ")
-            ->selectRaw("
+    ->selectRaw("
         SUM(
             CASE
-                WHEN ac.status_penanganan = 'proses'
+                WHEN anomaly_cases.status_penanganan = 'proses'
                 THEN 1 ELSE 0
             END
         ) AS proses
     ")
-            ->selectRaw("
+    ->selectRaw("
         SUM(
             CASE
-                WHEN ac.status_penanganan = 'menunggu_konfirmasi'
+                WHEN anomaly_cases.status_penanganan = 'menunggu_konfirmasi'
                 THEN 1 ELSE 0
             END
         ) AS menunggu
     ")
-            ->selectRaw("
+    ->selectRaw("
         SUM(
             CASE
-                WHEN ac.status_penanganan = 'selesai'
+                WHEN anomaly_cases.status_penanganan = 'selesai'
                 THEN 1 ELSE 0
             END
         ) AS selesai
     ")
-            ->groupBy('taskforce_nama')
-            ->orderByDesc('total')
-            ->get();
-
-
-
-
+    ->groupBy('taskforce_nama')
+    ->orderByDesc('total')
+    ->get();
         /*
         |--------------------------------------------------------------------------
         | Data Filter
