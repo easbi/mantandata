@@ -88,31 +88,16 @@ class AnomalyImportController extends Controller
         $allocation = null;
         $resolvedKodeWilayah = $case->kode_wilayah;
 
-        if (empty($resolvedKodeWilayah) || $resolvedKodeWilayah === '-') {
-            $latestSnapshot = $case->snapshots->last();
-            $resolvedKodeWilayah = $this->resolveKodeWilayahFromSnapshot($latestSnapshot);
-        }
+        // Cari alokasi berdasarkan 16 digit pertama NKS
+        if (!empty($case->nks) && $case->nks !== '-') {
+            $kodeAlokasi = substr(trim($case->nks), 0, 16);
 
-        if (!empty($resolvedKodeWilayah) && $resolvedKodeWilayah !== '-') {
-            // Try exact match first
-            $allocation = AlokasiPetugas::where('kode_wilayah', $resolvedKodeWilayah)
+            $allocation = AlokasiPetugas::where(
+                'kode_wilayah',
+                $kodeAlokasi
+            )
                 ->orderByDesc('periode')
                 ->first();
-
-            // Try a normalized uppercase/no-space match
-            if (!$allocation) {
-                $normalized = strtoupper(preg_replace('/\s+/', '', $resolvedKodeWilayah));
-                $allocation = AlokasiPetugas::whereRaw('REPLACE(UPPER(kode_wilayah), " ", "") = ?', [$normalized])
-                    ->orderByDesc('periode')
-                    ->first();
-            }
-
-            // Try like match as a last resort
-            if (!$allocation) {
-                $allocation = AlokasiPetugas::where('kode_wilayah', 'like', '%' . $resolvedKodeWilayah . '%')
-                    ->orderByDesc('periode')
-                    ->first();
-            }
         }
 
         // If still not found, attempt to match by assignment_id present in the latest snapshot
